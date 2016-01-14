@@ -8,8 +8,11 @@ namespace app\controllers;
 
 
 use app\models\LoginForm;
+use app\models\Message;
+use app\models\MessageForm;
 use app\models\SignUpForm;
 use Yii;
+use yii\data\Pagination;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 
@@ -57,7 +60,34 @@ class SiteController extends Controller {
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        $query = Message::find()->orderBy(['created_at' => SORT_DESC]);
+
+        $count = $query->count();
+
+        $pagination = new Pagination(
+            [
+                'totalCount' => $count,
+                'pageSize' => 25,
+            ]
+        );
+
+        $messages = $query->offset($pagination->offset)
+            ->limit($pagination->limit)
+            ->all();
+
+        $userMessage = new MessageForm();
+
+        if ($userMessage->load(Yii::$app->request->post()) && $userMessage->process()) {
+            $this->redirect(['index']);
+        }
+
+        return $this->render('index',
+            [
+                'messages' => $messages,
+                'pagination' => $pagination,
+                'userMessage' => $userMessage,
+
+            ]);
     }
 
     /**

@@ -138,6 +138,14 @@ class User extends ActiveRecord implements IdentityInterface {
     }
 
     /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getMessages()
+    {
+        return $this->hasMany(Message::className(), ['user_id' => 'id'])->inverseOf('user');
+    }
+
+    /**
      * @param bool $insert
      * @return bool|void
      */
