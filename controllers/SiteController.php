@@ -12,11 +12,15 @@ use app\models\Message;
 use app\models\MessageForm;
 use app\models\SignUpForm;
 use Yii;
+use yii\base\Object;
 use yii\data\Pagination;
 use yii\filters\AccessControl;
+use yii\helpers\Json;
 use yii\web\Controller;
 
 class SiteController extends Controller {
+
+    public $layout = 'noSidebar';
 
     /**
      * @return array
@@ -26,7 +30,7 @@ class SiteController extends Controller {
         return [
             'access' => [
                 'class' => AccessControl::className(),
-                'only' => ['logout', 'login', 'signup', 'post'],
+                'only' => ['logout', 'login', 'signup'],
                 'rules' => [
                     [
                         'actions' => ['signup', 'login'],
@@ -34,7 +38,7 @@ class SiteController extends Controller {
                         'roles' => ['?']
                     ],
                     [
-                        'actions' => ['logout', 'post'],
+                        'actions' => ['logout'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -60,6 +64,15 @@ class SiteController extends Controller {
      */
     public function actionIndex()
     {
+        if ( ! Yii::$app->user->isGuest ) {
+            $this->layout = 'rightSidebar';
+        }
+
+        $userMessage = new MessageForm();
+
+        $operationSucceed = $userMessage->load(Yii::$app->request->post()) && $userMessage->process();
+
+
         $query = Message::find()->orderBy(['created_at' => SORT_DESC]);
 
         $count = $query->count();
@@ -75,9 +88,25 @@ class SiteController extends Controller {
             ->limit($pagination->limit)
             ->all();
 
-        $userMessage = new MessageForm();
+        if ( Yii::$app->request->isAjax ) {
+            $response = [];
+            $response['errors'] = !$operationSucceed;
 
-        if ($userMessage->load(Yii::$app->request->post()) && $userMessage->process()) {
+            if ($response['errors']) {
+                $response['content'] = $userMessage->getErrors('message');
+            } else {
+                $response['content'] = $this->renderPartial('messages',
+                    [
+                        'messages'   => $messages,
+                        'pagination' => $pagination,
+                    ]
+                );
+            }
+
+            return Json::encode($response);
+        }
+
+        if ( $operationSucceed ) {
             $this->redirect(['index']);
         }
 
@@ -86,7 +115,6 @@ class SiteController extends Controller {
                 'messages' => $messages,
                 'pagination' => $pagination,
                 'userMessage' => $userMessage,
-
             ]);
     }
 

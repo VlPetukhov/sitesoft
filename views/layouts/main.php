@@ -46,13 +46,6 @@ AppAsset::register($this);
                 ['label' => 'Регистрация', 'url' => ['/site/signup']],
             ]
         );
-    } else {
-        $items = array_merge(
-            $items,
-            [
-                ['label' => 'Выход', 'url' => ['/site/logout']],
-            ]
-        );
     }
 
     echo Nav::widget([
@@ -64,9 +57,6 @@ AppAsset::register($this);
     ?>
 
     <div class="container">
-        <?= Breadcrumbs::widget([
-            'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
-        ]) ?>
         <?= $content ?>
     </div>
 </div>
